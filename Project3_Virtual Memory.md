@@ -6,41 +6,41 @@
     
     프로젝트 3의 경우 여러분의 편의를 위해 단계별 지침을 제공합니다.
     
-    - 배경
-        - 소스 파일
+    ## 배경
+        ### 소스 파일
             
             이 프로젝트의 `vm` 디렉토리에서 작업하게 됩니다. `Makefile`을 업데이트하여 `-DVM` 설정을 켭니다. 방대한 양의 템플릿 코드를 제공합니다. 
             
             반드시 주어진 템플릿을 따라야 합니다. 즉, 주어진 템플릿에 기반하지 않은 코드를 제출하면 0점을 받습니다. 또한 "변경하지 마세요"라고 표시된 템플릿은 절대로 변경해서는 안 됩니다. 
             
-            - `include/vm/vm.h`, `vm/vm.c`
+            #### `include/vm/vm.h`, `vm/vm.c`
                 
                 ![스크린샷 2023-12-25 오후 3.20.34.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/b278eae5-15fb-42de-a493-229718a0b327/f3b48d32-0268-42a4-b7fe-ad06093a67ba/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA_2023-12-25_%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE_3.20.34.png)
                 
-            - vm_type(가상 메모리 타입)
+            #### vm_type(가상 메모리 타입)
                 - `VM_ANON`(파일과 relate 되지 않은 페이지, anonymous page)
                 - `VM_PAGE_CACHE`(페이지 캐시를 가진 페이지)
                     - 프로젝트 4용이므로, 3에서는 무시하기
                 - `VM_FILE`(파일과 relate 된 페이지)
                 - `VM_UNINIT`(초기화 되지 않은 페이지)
-            - `include/vm/uninit.h`, `vm/uninit.c`
+            #### `include/vm/uninit.h`, `vm/uninit.c`
                 - 초기화되지 않은 페이지에 대한 작업을 제공합니다(vm_type = `VM_UNINIT`).
                 - 현재 설계에서는, 모든 페이지가 처음에 초기화되지 않은 페이지로 설정되고, 익명 페이지(anonymous pages) 또는 파일 백업 페이지(file backed pages)로 변환됩니다.
-            - `include/vm/anon.h`, `vm/anon.c`
+            #### `include/vm/anon.h`, `vm/anon.c`
                 - 익명 페이지(anonymous pages)에 대한 작업을 제공합니다(vm_type = `VM_ANON`).
-            - `include/vm/file.h`, `vm/file.c`
+            #### `include/vm/file.h`, `vm/file.c`
                 - 파일 지원 페이지에 대한 작업을 제공합니다(vm_type = `VM_FILE`).
-            - `includew/vm/inspect.h`, `vm/inspect.c`
+            #### `includew/vm/inspect.h`, `vm/inspect.c`
                 - 채점을 위한 메모리 검사 연산을 포함합니다.
                 - 이 파일은 **변경하지 마세요.**
-            - `include/devices/block.h`, `devices/block.c`
+            #### `include/devices/block.h`, `devices/block.c`
                 - 블록 장치에 대한 섹터 기반 읽기 및 쓰기 액세스를 제공합니다. 이 인터페이스를 사용하여 블록 장치로 **스왑 파티션**에 액세스합니다.
                 - `include/devices/block.h`, `devices/block.c` 로 봐야한다.(git book manual이 업데이트 안되어 있는듯)
-        - Memory 용어
+        ### Memory 용어
             
             먼저 메모리와 스토리지에 대한 몇 가지 용어를 소개합니다. 이 용어 중 일부는 프로젝트 2([가상 메모리 레이아웃](https://www.notion.so/KAIST-PintOS-Assignment-fa08d9c1fc8e430f9496de59a3ae8e2c?pvs=21) 참조)에서 익숙한 것이지만 대부분은 새로운 용어입니다.
             
-            - Pages
+            #### Pages
                 
                 ‘가상 페이지(virtual page)’라고도 하는 ‘페이지(page)’는 길이가 4,096바이트(=4KB =***page size***)인 가상 메모리의 연속적인 영역입니다. 
                 
@@ -50,7 +50,7 @@
                 
                 상위 비트는 곧 도입될 페이지 테이블의 인덱스를 나타내는 데 사용됩니다. 64비트 시스템에서는 4단계 페이지 테이블을 사용하므로 가상 주소는 다음과 같이 보입니다:
                 
-                ```
+                `
                 63          48 47            39 38            30 29            21 20         12 11         0
                 +-------------+----------------+----------------+----------------+-------------+------------+
                 | Sign Extend |    Page-Map    | Page-Directory | Page-directory |  Page-Table |    Page    |
@@ -59,7 +59,7 @@
                               |                |                |                |             |            |
                               +------- 9 ------+------- 9 ------+------- 9 ------+----- 9 -----+---- 12 ----+
                                                           Virtual Address
-                ```
+                `
                 
                 각 프로세스에는 독립적인 사용자(가상) 페이지 세트가 있으며, 이 페이지는 가상 주소 `KERN_BASE`(0x8004000000) 아래에 있는 페이지입니다. 반면 ***커널(가상) 페이지*** 세트는 전역이므로 실행 중인 스레드나 프로세스에 관계없이 동일한 위치에 유지됩니다. 커널은 사용자 페이지와 커널 페이지 모두에 액세스할 수 있지만 사용자 프로세스는 자신의 사용자 페이지에만 액세스할 수 있습니다. 자세한 내용은 [가상 메모리 레이아웃](https://www.notion.so/KAIST-PintOS-Assignment-fa08d9c1fc8e430f9496de59a3ae8e2c?pvs=21)을 참조하세요.
                 
@@ -102,17 +102,17 @@
                 
                 핀토스는 **가상 주소 작업에 유용한 몇 가지 함수**를 제공합니다. 자세한 내용은 가상 주소 섹션을 참조하십시오.
                 
-            - Frames
+            #### Frames
                 
                 ***물리적 프레임*** 또는 ***페이지 프레임***이라고도 하는 ***프레임***은 물리적 메모리의 연속적인 영역입니다. (물리 메모리 자체는 연속적이지 않지만, 물리 프레임은 연속적이다.) 페이지와 마찬가지로 프레임도 페이지 크기와 페이지 정렬을 유지해야 합니다. 따라서 64비트 물리적 주소는 다음과 같이 ***프레임 번호***와 ***프레임 오프셋***(또는 그냥 ***오프셋***)으로 나눌 수 있습니다:
                 
-                ```
+                `
                                           12 11         0
                     +-----------------------+-----------+
                     |      Frame Number     |   Offset  |
                     +-----------------------+-----------+
                               Physical Address
-                ```
+                `
                 
                 **x86-64는 물리적 주소의 메모리에 직접 액세스할 수 있는 방법을 제공하지 않습니다. 핀토스는 커널 가상 메모리를 물리적 메모리에 직접 매핑하여 이 문제를 해결**합니다. 커널 가상 메모리의 첫 번째 페이지는 물리적 메모리의 첫 번째 프레임에, 두 번째 페이지는 두 번째 프레임에 매핑하는 식으로 말이죠. 따라서 **커널 가상 메모리를 통해 프레임에 액세스할 수 있습니다**.
                 
@@ -120,13 +120,13 @@
                 
                 - `ptov` : physical to virtual
                 - `vtop` : virtual to physical
-            - Page Tables
+            #### Page Tables
                 
                 ***페이지 테이블***은 CPU가 가상 주소를 물리적 주소로, 즉 페이지에서 프레임으로 변환하는 데 사용하는 데이터 구조입니다.(page → frame) 페이지 테이블 형식은 x86-64 아키텍처에 의해 결정됩니다. 핀토스는 `threads/mmu.c`에서 페이지 테이블 관리 코드를 제공합니다.
                 
                 아래 다이어그램은 페이지와 프레임 간의 관계를 보여줍니다. 왼쪽의 가상 주소는 페이지 번호와 오프셋으로 구성됩니다. 페이지 테이블은 페이지 번호를 프레임 번호로 변환하고, 수정되지 않은 오프셋과 결합하여 오른쪽의 물리적 주소를 얻습니다.
                 
-                ```
+                `
                                           +----------+
                          .--------------->|Page Table|-----------.
                         /                 +----------+            |
@@ -136,34 +136,34 @@
                     +---------+----+                         +---------+----+
                      Virt Addr   |                            Phys Addr    ^
                                   \_______________________________________/
-                ```
+                `
                 
                 페이지 테이블은 CPU가 가상 주소를 실제 주소로, 즉 페이지에서 프레임으로 변환하는 데 사용하는 데이터 구조입니다. 페이지 테이블 형식은 x86-64 아키텍처에 의해 결정됩니다. 핀토스는 `threads/mmu.c` 에서 페이지 테이블 관리 코드를 제공합니다.
                 
                 - 운영체제 책 p199)
                     - 각 프로세스의 물리 메모리에 상주, 운영체제 메모리 영역에 페이지 테이블이 존재한다고 당분간 가정
                     - 추가) Supplemental Page Table는 물리 메모리에 존재하는 페이지 테이블(Page Table)과 달리, 가상 메모리의 일부로 존재
-            - Swap Slots
+            #### Swap Slots
                 
                 **스왑 슬롯(swap slots)**은 스왑 파티션에 있는 디스크 공간의 페이지 크기 영역입니다. → swap은 disk의 한 영역 
                 
                 하드웨어적 제한들로 인해 배치가 제한되는 것(정렬)이 프레임에서보단 슬롯에서 더 유연한 편이지만, 정렬한다고 해서 부정적인 영향이 생기는 것이 아니기때문에, 스왑 슬록은 페이지 크기에 정렬하는 것이 좋다.
                 
-        - 리소스 관리 개요
+        ### 리소스 관리 개요
             
             다음 데이터 구조를 설계/구현해야 합니다:
             
-            ### Supplemental page table(보충 페이지 테이블)
+            - Supplemental page table(보충 페이지 테이블)
             
             > 페이지 테이블을 보완하여 **페이지 오류 처리**를 활성화합니다. 아래의 보충 페이지 테이블 관리를 참조하세요.
             > 
             
-            ### Frame table
+            - Frame table
             
             > 물리적 프레임의 **퇴출(eviction) 정책**을 효율적으로 구현할 수 있습니다. 아래 프레임 테이블 관리하기를 참조하세요.
             > 
             
-            ### Swap table
+            - Swap table
             
             > 스왑 슬롯의 사용량을 추적합니다. 아래의 스왑 테이블 관리하기를 참조하세요.
             > 
@@ -184,7 +184,7 @@
                 
                 더 복잡한 데이터 구조는 더 나은 성능이나 기타 이점을 제공할 수 있지만, 구현을 불필요하게 복잡하게 만들 수도 있습니다. 따라서 설계의 일부로 고급 데이터 구조(예: 균형 잡힌 이진 트리)를 구현하는 것은 권장하지 않습니다.
                 
-        - Supplemental Page Table 관리하기
+        ### Supplemental Page Table 관리하기
             
             ![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/b278eae5-15fb-42de-a493-229718a0b327/eba05026-26af-4237-bcbc-a1f07386d534/Untitled.png)
             
@@ -244,7 +244,7 @@
                 </aside>
                 
             
-        - Frame Table 관리
+        ### Frame Table 관리
             - 현재 사용 중인 frame을 관리하기 위한 table
             - 프레임 테이블은 각 프레임의 엔트리 정보가 담겨있다
             - 물리 프레임의 방출 정책(eviction policy)를 구현하는 것을 가능케한다.
@@ -280,7 +280,7 @@
                 
                 액세스된 비트와 더티 비트로 작업하는 함수에 대한 자세한 내용은 *[페이지 테이블 액세스 비트 및 더티 비트](https://www.notion.so/KAIST-PintOS-Assignment-fa08d9c1fc8e430f9496de59a3ae8e2c?pvs=21)* 섹션을 참조하세요.
                 
-        - Swap Table 관리
+        ### Swap Table 관리
             - swap 영역 관리를 위한 table
             - swap slot의 사용을 추척한다.
             
@@ -292,13 +292,13 @@
             
             스왑 슬롯의 내용을 프레임으로 다시 읽을 때 **스왑 슬롯을 해제**하세요.
             
-        - 메모리 매핑 파일 관리
+        ### 메모리 매핑 파일 관리
             
             파일 시스템은 `read` 및 `write` 시스템 호출을 통해 가장 일반적으로 액세스됩니다. 보조 인터페이스는 `mmap` 시스템 호출을 사용하여 파일을 가상 페이지로 "매핑"하는 것입니다. 그러면 프로그램은 파일 데이터에 직접 메모리 명령을 사용할 수 있습니다. 파일 `foo`의 길이가 `0x1000`바이트(4kB, 즉 한 페이지)라고 가정해 보겠습니다. `foo`가 주소 `0x5000`에서 시작하는 메모리에 매핑되어 있으면 `0x5000. .0x5fff` 위치에 액세스하는 모든 메모리는 `foo`의 해당 바이트에 액세스하게 됩니다.
             
             다음은 `mmap`을 사용하여 파일을 콘솔에 인쇄하는 프로그램입니다. 이 프로그램은 명령줄에 지정된 파일을 열어 가상 주소 `0x10000000`에 매핑하고, 매핑된 데이터를 콘솔에 쓴 다음(fd 1), 파일의 매핑을 해제합니다.
             
-            ```
+            `
             #include <stdio.h>
             #include <syscall.h>
             int main (int argc UNUSED, char *argv[])
@@ -310,7 +310,7 @@
               munmap (map);                                     /* Unmap file (optional). */
               return 0;
             }
-            ```
+            `
             
             제출물은 메모리 매핑된 파일에서 어떤 메모리를 사용하는지 추적할 수 있어야 합니다. 이는 매핑된 영역에서 페이지 오류를 적절히 처리하고 매핑된 파일이 프로세스 내에서 다른 세그먼트와 겹치지 않도록 하기 위해 필요합니다.
 
@@ -323,7 +323,7 @@
             
             `include/vm/vm.h`에 정의된 `page`는 가상 메모리에 있는 페이지를 나타내는 구조입니다. 여기에는 페이지에 대해 알아야 할 모든 필수 데이터가 저장됩니다. 현재 템플릿에서 구조는 다음과 같이 보입니다:
             
-            ```
+            `
             struct page {
               const struct page_operations *operations;
               void *va;              /* Address in terms of user space */
@@ -338,7 +338,7 @@
             #endif
               };
             };
-            ```
+            `
             
             이 구조체에는 **페이지 연산**(아래 참조), **가상 주소**, **물리적 프레임**이 있습니다. 또한 유니온 필드도 있습니다. 유니온은 메모리 영역에 서로 다른 유형의 데이터를 저장할 수 있는 특수 데이터 유형입니다. 유니온에는 여러 멤버가 있지만 한 번에 하나의 멤버만 값을 포함할 수 있습니다. 즉, 시스템에서 페이지는 uninit_page, anon_page, file_page 또는 page_cache가 될 수 있습니다. 예를 들어 페이지가 익명 페이지인 경우(익명 페이지 참조), 페이지 구조체에는 익명 페이지에 필요한 모든 정보를 포함하는 필드 `struct anon_page anon`이 멤버 중 하나로 포함될 것입니다.`anon_page`는 익명 페이지를 지키기위한 모든 필요한 정보를 담을 것이다.
             
@@ -350,22 +350,22 @@
             
             페이지 연산을 위한 `struct page_operations`는 `include/vm/vm.h`에 정의되어 있습니다. 이 구조체는 3개의 함수 포인터를 포함하는 함수 테이블이라고 생각하면 됩니다.
             
-            ```
+            `
             struct page_operations {
               bool (*swap_in) (struct page *, void *);
               bool (*swap_out) (struct page *);
               void (*destroy) (struct page *);
               enum vm_type type;
             };
-            ```
+            `
             
             이제 page_operation 구조를 어디에서 찾을 수 있는지 살펴봅시다. `include/vm/vm.h`에서 페이지 구조체 `struct page`를 살펴보면 `operations`라는 필드가 있는 것을 볼 수 있습니다. 이제 `vm/file.c`로 이동하면 함수 프로토타입 앞에 선언된 page_operation 구조체인 `file_ops`를 볼 수 있습니다. 이것은 파일 지원 페이지(file backed-page)에 대한 함수 포인터 표입니다. `.destroy` 필드에는 `file_backed_destroy` 값이 있습니다. 이것은 페이지를 삭제하는 함수이며 같은 파일에 정의되어 있습니다.
             
             함수 포인터 인터페이스로 `file_backed_destroy`가 어떻게 호출되는지 이해해 보겠습니다. `vm_dealloc_page(page)` (`vm/vm.c`에서)가 호출되고 이 페이지가 파일 백업 페이지(`VM_FILE`)라고 가정해 보겠습니다. 함수 내에서 `destroy(page)`를 호출합니다. `destroy(page)`는 다음과 같이 `include/vm/vm.h`에 매크로로 정의됩니다:
             
-            ```
+            `
             #define destroy(page) if ((page)->operations->destroy) (page)->operations->destroy (page)
-            ```
+            `
             
             이는 `destroy` 함수를 호출하면 실제로 페이지 구조에서 검색된 파괴 함수인 `(page)→operations→destroy(page)`를 호출한다는 것을 알려줍니다. 이 페이지는 `VM_FILE` 페이지이므로 `.destroy` 필드는 `file_backed_destory`를 가리킵니다. 결과적으로 파일 백업 페이지에 대한 삭제 루틴이 수행됩니다.
             
@@ -379,25 +379,25 @@
         
         ---
         
-        ```
+        `
         void supplemental_page_table_init (struct supplemental_page_table *spt);
-        ```
+        `
         
         보조 페이지 테이블을 초기화합니다. 보조 페이지 테이블에 **사용할 데이터 구조를 선택**할 수 있습니다. 이 함수는 새 프로세스가 시작될 때(`userprog/process.c`의 `initd`에서), 프로세스가 포크될 때(`userprog/process.c`의 `__do_fork`에서) 호출됩니다.
         
         ---
         
-        ```
+        `
         struct page *spt_find_page (struct supplemental_page_table *spt, void *va);
-        ```
+        `
         
         주어진 보조 페이지 테이블에서 va에 해당하는 `struct page`를 찾습니다. 실패하면 NULL을 반환합니다.
         
         ---
         
-        ```c
+        `c
         bool spt_insert_page (struct supplemental_page_table *spt, struct page *page);
-        ```
+        `
         
         주어진 보조 페이지 테이블에 `struct page`를 삽입합니다. 이 함수는 주어진 부가 페이지 테이블에 가상 주소가 존재하지 않는지 확인해야 합니다.
         
@@ -407,33 +407,33 @@
             
             이제부터는 모든 페이지가 메모리가 생성될 당시의 **메타데이터만 보관하는 것이 아닙니다**. 따라서 물리적 메모리를 관리하기 위해서는 다른 방식이 필요합니다. `include/vm/vm.h`에는 물리적 메모리를 나타내는 `struct frame`이 존재합니다. 현재 구조체는 다음과 같습니다:
             
-            ```c
+            `c
             /* The representation of "frame" */
             struct frame {
               void *kva;
               struct page *page;
             };
-            ```
+            `
             
             이 구조체에는 커널 가상 주소(kernel virtual address)인 `kva`와 페이지 구조체인 `page`라는 두 개의 필드만 있습니다. 프레임 관리 인터페이스를 구현할 때 멤버를 더 추가할 수 있습니다.
             
             `**vm/vm.c`에서 `vm_get_frame`, `vm_claim_page` 및 `vm_do_claim_page`를 구현**
             
-            ```c
+            `c
             static struct frame *vm_get_frame (void);
-            ```
+            `
             
             `palloc_get_page`를 호출하여 사용자 풀에서  새로운 실제 페이지를 가져옵니다. 사용자 풀에서 페이지를 성공적으로 가져오면 프레임도 할당하고 멤버를 초기화하여 반환합니다. `vm_get_frame`을 구현한 후에는 **이 함수를 통해 모든 사용자 공간 페이지(PALLOC_USER)를 할당**해야 합니다. 페이지 할당이 실패할 경우 **지금은** 스왑 아웃을 처리할 필요가 없습니다. 당분간은 이러한 경우를 `PANIC("todo")`으로 표시하면 됩니다.
             
-            ```c
+            `c
             bool vm_do_claim_page (struct page *page);
-            ```
+            `
             
             Claim, 한 페이지에 물리적 프레임을 할당합니다. 먼저 `vm_get_frame`을 호출하여 프레임을 가져옵니다(템플릿에서 이미 완료됨). 그런 다음 **MMU를 설정**해야 합니다. 즉, 가상 주소에서 페이지 테이블의 실제 주소로 매핑을 추가합니다. 반환 값은 작업이 성공했는지 여부를 나타내야 합니다.
             
-            ```c
+            `c
             bool vm_claim_page (void *va);
-            ```
+            `
             
             `va`를 할당할 페이지를 claim합니다. 먼저 페이지를 가져온 다음 해당 페이지로 `vm_do_claim_page`를 호출해야 합니다.
             
@@ -467,10 +467,10 @@
         
         ---
         
-        ```c
+        `c
         bool vm_alloc_page_with_initializer (enum vm_type type, void *va,
                 bool writable, vm_initializer *init, void *aux);
-        ```
+        `
         
         > 주어진 타입으로 초기화되지 않은 페이지를 만듭니다. uninit_page의 swap_in 핸들러는 유형에 따라 페이지를 자동으로 초기화하고 주어진 AUX로 INIT를 호출합니다. 페이지 구조가 완성되면 프로세스의 **보조 페이지 테이블에 페이지를 삽입**합니다. `vm.h`에 정의된 `VM_TYPE` 매크로를 사용하면 편리합니다.
         > 
@@ -479,9 +479,9 @@
         
         ---
         
-        ```c
+        `c
         static bool uninit_initialize (struct page *page, void *kva);
-        ```
+        `
         
         > 첫 번째 fault에서 페이지를 초기화합니다. 템플릿 코드는 먼저 `vm_initializer`와 `aux`를 가져와서 함수 포인터를 통해 해당 page_initializer를 호출합니다. 디자인에 따라 함수를 수정해야 할 수도 있습니다.
         > 
@@ -490,18 +490,18 @@
         
         ---
         
-        ```c
+        `c
         void vm_anon_init (void);
-        ```
+        `
         
         > 익명 페이지 하위 시스템을 초기화합니다. 이 함수에서는 익명 페이지와 관련된 모든 것을 설정할 수 있습니다.
         > 
         
         ---
         
-        ```c
+        `c
         bool anon_initializer (struct page *page,enum vm_type type, void *kva);
-        ```
+        `
         
         > 이 함수는 먼저 `page->operations`에서 익명 페이지에 대한 핸들러를 설정합니다. 현재 빈 구조체인 `anon_page`의 일부 정보를 업데이트해야 할 수도 있습니다. 이 함수는 익명 페이지(예: `VM_ANON`)의 이니셜라이저로 사용됩니다.
         > 
@@ -514,19 +514,19 @@
         
         ---
         
-        ```c
+        `c
         static bool load_segment (struct file *file, off_t ofs, uint8_t *upage,
                 uint32_t read_bytes, uint32_t zero_bytes, bool writable);
-        ```
+        `
         
         > 현재 코드는 파일에서 읽을 바이트 수와 메인 루프 내에서 0으로 채울 바이트 수를 계산합니다. 그런 다음 `vm_alloc_page_with_initializer`를 호출하여 보류 중인 객체를 생성합니다. `vm_alloc_page_with_initializer`에 제공할 보조 값을 `aux` 인수로 설정해야 합니다. 바이너리 로딩에 필요한 정보를 포함하는 구조를 만들 수 있습니다.
         > 
         
         ---
         
-        ```c
+        `c
         static bool lazy_load_segment (struct page *page, void *aux);
-        ```
+        `
         
         > `load_segment`에서 `vm_alloc_page_with_initializer`의 네 번째 인자로 `lazy_load_segment`가 제공되는 것을 보셨을 것입니다. 이 함수는 실행 파일의 페이지 이니셜라이저이며 페이지 오류 발생 시 호출됩니다. 이 함수는 페이지 구조체와 `aux`를 인자로 받습니다. `aux`는 `load_segment`에서 설정한 정보입니다. 이 정보를 사용하여 세그먼트를 읽을 파일을 찾아서 결국 세그먼트를 메모리로 읽어야 합니다.
         > 
@@ -545,19 +545,19 @@
         
         ---
         
-        ```c
+        `c
         bool supplemental_page_table_copy (struct supplemental_page_table *dst,
             struct supplemental_page_table *src);
-        ```
+        `
         
         > 보충 페이지 테이블을 src에서 dst로 복사합니다. 이 함수는 자식이 부모의 실행 컨텍스트를 상속해야 할 때 사용됩니다(예: `fork()`). src의 보충 페이지 테이블에 있는 각 페이지를 반복하여 dst의 보충 페이지 테이블에 있는 항목의 정확한 복사본을 만듭니다. 초기화되지 않은 페이지를 할당하고 즉시 청구(claim)해야 합니다.
         > 
         
         ---
         
-        ```c
+        `c
         void supplemental_page_table_kill (struct supplemental_page_table *spt);
-        ```
+        `
         
         > 보조 페이지 테이블이 보유하고 있던 모든 리소스를 해제합니다. 이 함수는 프로세스가 종료될 때 호출됩니다(`userprog/process.c`의 `process_exit()`). 페이지 항목을 반복하고 테이블의 페이지에 대해 `destroy(page)`를 호출해야 합니다. 이 함수에서 실제 페이지 테이블(pml4)과 물리적 메모리(할당된 메모리)는 걱정할 필요가 없습니다. 호출자는 보조 페이지 테이블이 정리된 후 이를 정리하기 때문입니다.
         > 
@@ -565,9 +565,9 @@
         
          `vm/uninit.c`에서 `uninit_destroy`를 구현하고 `vm/anon.c`에서 `anon_destroy`를 구현합니다. 이것은 uninit page의 `destroy` 작업을 위한 핸들러입니다. uninit page가 다른 페이지 오브젝트로 변환(transmuted)되더라도 프로세스가 종료될 때 여전히 초기화되지 않은 페이지가 남아있을 수 있습니다.
         
-        ```c
+        `c
         static void uninit_destroy (struct page *page);
-        ```
+        `
         
         > 페이지 구조체가 보유하던 자원을 해제합니다. 페이지의 가상 머신 유형을 확인하고 그에 따라 처리해야 할 수 있습니다.
         > 
@@ -576,9 +576,9 @@
         
         ---
         
-        ```c
+        `c
         static void anon_destroy (struct page *page);
-        ```
+        `
         
         > 익명 페이지가 보유하고 있던 리소스를 해제합니다. 페이지 구조체를 명시적으로 해제할 필요는 없으며, 호출자가 해제해야 합니다.
         > 
@@ -599,19 +599,19 @@
     
     ---
     
-    ```c
+    `c
     bool vm_try_handle_fault (struct intr_frame *f, void *addr,
         bool user, bool write, bool not_present);
-    ```
+    `
     
     > 이 함수는 page fault 예외를 처리하는 동안 `userprog/exception.c`의 `page_fault`에서 호출됩니다. 이 함수에서는, 페이지 오류가 스택 증가의 유효한 경우인지 여부를 확인해야 합니다. 스택 증가로 오류를 처리할 수 있음을 확인했다면 오류가 발생한 주소로 `vm_stack_growth`를 호출합니다.
     > 
     
     ---
     
-    ```c
+    `c
     void vm_stack_growth (void *addr);
-    ```
+    `
     
     > `addr`이 더 이상 오류 주소(faulted address)가 되지 않도록 하나 이상의 익명 페이지를 할당하여 스택 크기를 늘립니다. 할당을 처리할 때 `addr`을 PGSIZE로 round down(내림)해야 합니다.
     > 
@@ -628,9 +628,9 @@
         
         메모리 매핑된 파일에 대한 두 가지 시스템 호출인 `mmap` 및 `munmap`을 구현합니다. VM 시스템은 mmap 영역에 페이지를 느리게 로드하고 매핑을 위한 백업 저장소로 mmaped 파일 자체를 사용해야 합니다. 이 두 시스템 호출을 구현하려면 `vm/file.c`에 정의된 `do_mmap` 및 `do_munmap`을 구현하고 사용해야 합니다.
         
-        ```c
+        `c
         void *mmap (void *addr, size_t length, int writable, int fd, off_t offset);
-        ```
+        `
         
         > `fd`로 열린 파일의 `offset` 바이트에서 시작하여 `length` 바이트만큼 프로세스의 가상 주소 공간인 `addr`에 매핑합니다. 전체 파일은 `addr`에서 시작하는 연속적인 가상 페이지로 매핑됩니다. 파일 길이가 PGSIZE의 배수가 아닌 경우, 매핑된 최종 페이지의 일부 바이트가 파일 끝을 넘어 "튀어나오게" 됩니다. 페이지에 오류가 발생하면 이 바이트를 0으로 설정하고(페이지의 유효하지 않은 부분을 0으로 채우라는 뜻인 듯), 페이지가 디스크에 다시 기록되면 이 바이트를 버립니다. 성공하면 이 함수는 파일이 매핑된 가상 주소를 반환합니다. 실패하면 파일을 매핑할 수 있는 유효한 주소가 아닌 NULL을 반환해야 합니다.
         > 
@@ -639,9 +639,9 @@
         
         메모리 매핑된 페이지도 익명 페이지와 마찬가지로 지연 방식으로 할당해야 합니다. `vm_alloc_page_with_initializer` 또는 `vm_alloc_page`를 사용하여 페이지 객체를 만들 수 있습니다
         
-        ```c
+        `c
         void munmap (void *addr);
-        ```
+        `
         
         > 지정된 주소 범위 `addr`에 대한 매핑을 매핑 해제합니다. 이 주소는 아직 매핑 해제되지 않은 동일한 프로세스에서 이전에 mmap을 호출하여 반환한 가상 주소여야 합니다.
         > 
@@ -656,27 +656,27 @@
         
         ---
         
-        ```c
+        `c
         void vm_file_init(void);
-        ```
+        `
         
         > 파일 지원 페이지 하위 시스템을 초기화합니다. 이 함수에서는 파일 백업 페이지와 관련된 모든 것을 설정할 수 있습니다.
         > 
         
         ---
         
-        ```c
+        `c
         void file_backed_initializer (struct page *page, enum vm_type type, void *kva);
-        ```
+        `
         
         > 파일 지원 페이지를 초기화합니다. 이 함수는 먼저 `page->operations`에서 파일 지원 페이지에 대한 핸들러를 설정합니다. 메모리를 백업하는 파일과 같은 페이지 구조체의 일부 정보를 업데이트할 수 있습니다.
         > 
         
         ---
         
-        ```c
+        `c
         static void file_backed_destroy (struct page *page);
-        ```
+        `
         
         > 연관된 파일을 닫아 파일 백업 페이지를 삭제합니다. 내용이 더럽혀진 경우, 변경 사항을 파일에 다시 써야 합니다. 이 함수에서 페이지 구조체를 해제할 필요는 없습니다. 이 작업은 `file_backed_destroy`의 **호출자가 처리**해야 합니다.
         > 
@@ -696,18 +696,18 @@
         
         ---
         
-        ```c
+        `c
         void vm_anon_init (void);
-        ```
+        `
         
         > 이 함수에서는 **스왑 디스크를 설정**해야 합니다. 또한 **스왑 디스크의 여유 공간과 사용 영역을 관리하기 위한 데이터 구조가 필요**합니다. 스왑 영역은 PGSIZE(4096바이트) 단위로 관리됩니다.
         > 
         
         ---
         
-        ```c
+        `c
         bool anon_initializer (struct page *page, enum vm_type type, void *kva);
-        ```
+        `
         
         > 익명 페이지의 이니셜라이저입니다. 스와핑을 지원하려면 `anon_page`에 몇 가지 정보를 추가해야 합니다.
         > 
@@ -716,18 +716,18 @@
         
         ---
         
-        ```c
+        `c
         static bool anon_swap_in (struct page *page, void *kva);
-        ```
+        `
         
         > 디스크의 데이터 내용을 메모리로부터 읽어, 스왑 디스크에서 익명 페이지로 스왑 합니다. 데이터의 위치는 페이지가 스왑될 때 페이지 구조체에 저장되어 있어야 하는 스왑 디스크입니다. 스왑 테이블을 업데이트하는 것을 잊지 마세요(스왑 테이블 관리 참조).
         > 
         
         ---
         
-        ```c
+        `c
         static bool anon_swap_out (struct page *page);
-        ```
+        `
         
         > 메모리로부터 디스크에 내용을 복사해 익명 페이지를 스왑 디스크로 스왑 합니다. 먼저, 스왑 테이블을 사용해 디스크의 빈 스왑 슬롯을 찾은 후, 데이터 페이지를 슬롯에 복사합니다. 데이터의 위치는 페이지 구조체에 저장되어야 합니다. 디스크에 더 이상 여유 슬롯이 없으면 커널을 패닉 할 수 있습니다.
         > 
@@ -738,18 +738,18 @@
         
         ---
         
-        ```c
+        `c
         static bool file_backed_swap_in (struct page *page, void *kva);
-        ```
+        `
         
         > 파일로부터 내용을 읽어서 `kva`에서 페이지를 교체합니다. 파일 시스템과 동기화해야 합니다.
         > 
         
         ---
         
-        ```c
+        `c
         static bool file_backed_swap_out (struct page *page);
-        ```
+        `
         
         > 파일에 내용을 다시 써서 페이지를 교환합니다. 먼저 페이지가 더티인지 확인해야 합니다. 페이지가 더럽지 않다면 파일의 내용을 수정할 필요가 없습니다. 페이지를 교체한 후에는 해당 페이지의 더티 비트를 꺼야 한다는 점을 잊지 마세요.
         > 
